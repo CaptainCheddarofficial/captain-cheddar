@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Captain Cheddar ($CHEDDAR) - Solana Pirate Mini App</title>
+  <meta name="description" content="Captain Cheddar ($CHEDDAR) - Organic pirate-themed memecoin on Solana. Tap-to-earn, high seas arcade runner, and airdrop snapshot portal for Telegram Mini App.">
+  <meta name="theme-color" content="#071322">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700;800&family=Pirata+One&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+    body {
+      font-family: 'Fredoka', system-ui, -apple-system, sans-serif;
+      background-color: #071322;
+      color: #f8fafc;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+    .font-pirate {
+      font-family: 'Pirata One', cursive, serif;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-55px) scale(1.25); }
+    }
+    .floating-text {
+      animation: floatUp 0.85s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 30px rgba(250, 204, 21, 0.8); }
+    }
+    .glow-pulse {
+      animation: pulseGlow 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="flex flex-col h-screen w-full max-w-md mx-auto relative bg-[#071322]">
+  <!-- Top Navigation Header -->
+  <header class="flex-none px-4 pt-3 pb-2 bg-gradient-to-b from-slate-900 to-transparent border-b border-amber-500/20 z-10">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 to-yellow-400 p-0.5 shadow-md shadow-amber-500/20 overflow-hidden shrink-0">
+          <img src="/assets/aistudio/526e4cfd-b2b4-4852-a1ec-c68c350d9d03_2076133e.webp" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23f59e0b\'/><text x=\'50\' y=\'62\' font-size=\'44\' text-anchor=\'middle\'>🧀</text></svg>'" alt="Captain Cheddar" class="w-full h-full object-cover rounded-[14px]">
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span id="rank-badge" class="text-xs">🧀</span>
+            <div class="text-xs font-black text-amber-300 uppercase tracking-wider" id="rank-name">Cheese Deckhand</div>
+          </div>
+          <div class="text-[10px] text-slate-400 font-mono" id="user-display-id">ID: Captain</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="sound-btn" class="p-2 rounded-xl bg-slate-800/80 border border-slate-700/60 text-amber-400 hover:bg-slate-700/80 transition-colors">🔊</button>
+        <button id="pumpfun-btn" class="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-md active:scale-95 transition-transform">
+          <span>Pump.fun</span>
+          <span>🚀</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live Stats Bar -->
+    <div class="grid grid-cols-2 gap-2">
+      <div class="flex items-center gap-2 bg-slate-900/80 border border-amber-500/30 rounded-2xl px-3 py-1.5 shadow-inner">
+        <span class="text-2xl animate-pulse">🧀</span>
+        <div class="min-w-0">
+          <div class="text-[9px] text-amber-300/80 uppercase font-bold tracking-wider">Cheddar Loot</div>
+          <div class="text-sm font-black text-amber-400 font-mono truncate" id="cheddar-val">0</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 bg-slate-900/80 border border-emerald-500/30 rounded-2xl px-3 py-1.5 shadow-inner">
+        <span class="text-2xl">⏳</span>
+        <div class="min-w-0">
+          <div class="text-[9px] text-emerald-300/80 uppercase font-bold tracking-wider">Profit / Hour</div>
+          <div class="text-sm font-black text-emerald-400 font-mono truncate" id="pph-val">+0</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="flex-1 overflow-y-auto overflow-x-hidden relative flex flex-col" id="view-container">
+    <!-- VIEW: TAPPER (PILLAGE) -->
+    <div id="view-tapper" class="flex-1 flex flex-col items-center justify-between p-4 py-2">
+      <!-- Quick CA Banner -->
+      <div class="w-full flex items-center justify-between bg-amber-500/10 border border-amber-500/25 rounded-2xl px-3 py-1.5 mb-1.5 text-xs">
+        <div class="flex items-center gap-1.5 truncate mr-2">
+          <span class="text-amber-400 font-bold">$CHEDDAR:</span>
+          <span class="font-mono text-[11px] text-slate-300 truncate" id="ca-text">D9ZeLpkg134BSnwh1fkncyAmSqW7DBfzgqMcaKDcpump</span>
+        </div>
+        <button id="copy-ca-top" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-xl text-amber-300 font-bold text-[10px] active:scale-95 shrink-0 transition-all">
+          Copy Address
+        </button>
+      </div>
+
+      <!-- Mascot Pillaging Target -->
+      <div class="relative flex-1 flex flex-col items-center justify-center w-full my-auto">
+        <button id="mascot-tap-btn" class="relative focus:outline-none transition-transform duration-75 active:scale-90 select-none cursor-pointer">
+          <div class="w-56 h-56 rounded-full bg-gradient-to-tr from-amber-600 via-yellow-400 to-amber-500 p-1.5 shadow-2xl shadow-amber-500/40 flex items-center justify-center glow-pulse">
+            <div class="w-full h-full rounded-full bg-slate-950 border-4 border-amber-400/80 overflow-hidden relative shadow-inner">
+              <img src="/assets/aistudio/526e4cfd-b2b4-4852-a1ec-c68c350d9d03_2076133e.webp" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23f59e0b\'/><text x=\'50\' y=\'62\' font-size=\'44\' text-anchor=\'middle\'>🧀</text></svg>'" alt="Captain Cheddar" class="w-full h-full object-cover pointer-events-none select-none">
+            </div>
+          </div>
+        </button>
+        <div id="floating-container" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+      </div>
+
+      <div class="flex items-center gap-2 mb-2 bg-slate-900/70 border border-amber-500/20 rounded-full px-4 py-1 text-xs">
+        <span class="text-slate-300">Tap Yield: <strong class="text-amber-300 font-mono" id="tap-yield-val">+1 $CHEDDAR</strong></span>
+      </div>
+
+      <!-- Energy Stamina Bar -->
+      <div class="w-full bg-slate-900/90 border border-amber-500/30 rounded-2xl p-3 shadow-lg">
+        <div class="flex items-center justify-between text-xs font-bold mb-1.5">
+          <div class="flex items-center gap-1.5 text-amber-400">
+            <span>⚡ Energy Stamina</span>
+          </div>
+          <div class="font-mono text-slate-200">
+            <span class="text-amber-300 font-bold" id="energy-val">1000</span> / <span id="max-energy-val">1000</span>
+          </div>
+        </div>
+        <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden p-0.5 border border-slate-800">
+          <div id="energy-fill" class="h-full bg-gradient-to-r from-amber-500 to-yellow-400 rounded-full transition-all duration-300" style="width: 100%;"></div>
+        </div>
+        <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1">
+          <span id="energy-regen-val">Regens +2/sec</span>
+          <span id="energy-status" class="text-rose-400 font-semibold hidden">Low Stamina! Wait to recharge...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: SHIPYARD UPGRADES -->
+    <div id="view-upgrades" class="hidden flex-1 p-4 space-y-3 pb-6">
+      <div class="flex items-center justify-between mb-1">
+        <div>
+          <h2 class="text-xl font-black text-amber-400 font-pirate">Shipyard Upgrades</h2>
+          <p class="text-xs text-slate-400">Boost passive Cheddar/Hour & crew equipment.</p>
+        </div>
+      </div>
+      <div class="space-y-2.5" id="upgrades-list"></div>
+    </div>
+
+    <!-- VIEW: ARCADE MINI-GAME (FULLSCREEN RUNNER) -->
+    <div id="view-arcade" class="hidden flex-1 flex flex-col items-center justify-between p-2 pb-3">
+      <!-- High Seas Speedometer HUD -->
+      <div class="w-full bg-slate-900/95 border border-amber-500/30 rounded-2xl px-3 py-2 mb-2 shadow-lg">
+        <div class="flex items-center justify-between mb-1.5">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🧀</span>
+            <div>
+              <div class="text-[9px] text-amber-300 font-semibold uppercase tracking-wider">Score</div>
+              <div class="text-base font-black text-amber-400 font-mono" id="arcade-score">0</div>
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-[9px] text-slate-400 uppercase font-semibold">Speedometer</div>
+            <div class="flex items-center gap-1 font-mono font-black text-amber-300 text-xs" id="arcade-knots-display">
+              <span id="arcade-knots">18</span> KNOTS
+              <span id="boost-tag" class="hidden px-1.5 py-0.2 rounded bg-amber-500 text-slate-950 text-[9px] font-black animate-pulse">BOOST</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-right">
+            <div>
+              <div class="text-[9px] text-slate-400 uppercase font-semibold">Best Run</div>
+              <div class="text-xs font-bold text-amber-200 font-mono" id="arcade-best">0</div>
+            </div>
+            <div class="text-sm" id="arcade-lives">❤️❤️❤️</div>
+          </div>
+        </div>
+
+        <!-- Gauge Bar -->
+        <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+          <div id="arcade-speed-gauge" class="h-full bg-gradient-to-r from-cyan-500 via-amber-400 to-rose-500 transition-all duration-200" style="width: 25%;"></div>
+        </div>
+      </div>
+
+      <!-- Main Canvas Container -->
+      <div class="relative w-full flex-1 max-h-[500px] rounded-3xl overflow-hidden border-2 border-amber-500/40 bg-slate-950 shadow-2xl flex items-center justify-center">
+        <canvas id="arcade-canvas" width="360" height="480" class="w-full h-full touch-none"></canvas>
+        <div id="arcade-overlay" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+          <div class="text-5xl mb-2 animate-bounce">⛵</div>
+          <h3 class="text-2xl font-black text-amber-400 font-pirate mb-1" id="arcade-overlay-title">High Seas Arcade</h3>
+          <p class="text-xs text-slate-300 max-w-xs mb-4" id="arcade-overlay-sub">
+            Steer Captain Cheddar's corsair! Tap to fire forward bow cannons 💥 and blast enemy cat ships. Hit speed boost ramps to leap over naval mines!
+          </p>
+          <div class="grid grid-cols-2 gap-2 text-[11px] text-amber-300/90 font-mono mb-5 max-w-xs w-full bg-slate-900/80 p-2.5 rounded-xl border border-amber-500/20">
+            <div>🧀 Cheddar: +10 pts</div>
+            <div>⚡ Ramp: Mega Boost</div>
+            <div>💣 Cannons: Blow up foes</div>
+            <div>☠️ Mines: Jump or dodge</div>
+          </div>
+          <button id="arcade-start-btn" class="px-8 py-3 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black rounded-2xl shadow-xl active:scale-95 transition-transform text-sm">
+            Cast Off! 🌊
+          </button>
+        </div>
+      </div>
+      <div class="mt-1 text-[11px] text-slate-400">Drag to steer • Tap to shoot dual cannons • Hit ramps to jump!</div>
+    </div>
+
+    <!-- VIEW: CREW & DAILY STREAK -->
+    <div id="view-crew" class="hidden flex-1 p-4 space-y-4 pb-6">
+      <div>
+        <h2 class="text-xl font-black text-amber-400 font-pirate">Pirate Tavern & Crew</h2>
+        <p class="text-xs text-slate-400">Recruit fellow buccaneers & claim daily log bounties.</p>
+      </div>
+
+      <!-- 7-Day Bounty Streak -->
+      <div class="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-3.5 shadow-lg">
+        <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center gap-1.5">
+            <span>🎁</span>
+            <h3 class="text-sm font-bold text-slate-100">7-Day Daily Bounty</h3>
+          </div>
+          <span class="text-[11px] font-mono font-bold text-amber-300" id="streak-tracker-label">Day 1 / 7</span>
+        </div>
+        <div class="grid grid-cols-4 gap-2 mb-3" id="streak-grid"></div>
+        <button id="claim-streak-btn" class="w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md active:scale-95 transition-transform">
+          Claim Daily Bounty! 🧀
+        </button>
+      </div>
+
+      <!-- Referral Recruitment System -->
+      <div class="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 shadow-lg space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">👥</span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-100">Recruit Pirate Crew</h3>
+            <p class="text-[11px] text-slate-400">Earn +5,000 $CHEDDAR per recruited mate!</p>
+          </div>
+        </div>
+        <div class="flex items-center justify-between bg-slate-950 rounded-xl p-3 border border-slate-800">
+          <div>
+            <div class="text-xs text-slate-400">Your Recruited Crew</div>
+            <div class="text-lg font-black text-amber-400 font-mono" id="crew-count">0 Sailors</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-slate-400">Recruit Bounty</div>
+            <div class="text-sm font-bold text-emerald-400 font-mono" id="crew-bounty">+0 $CHEDDAR</div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button id="invite-crew-btn" class="py-3 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-md active:scale-95 transition-transform">
+            Invite Crew 🏴‍☠️
+          </button>
+          <button id="copy-ref-btn" class="py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 active:scale-95 transition-all">
+            Copy Link 📋
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: AIRDROP & SOLANA -->
+    <div id="view-airdrop" class="hidden flex-1 p-4 space-y-4 pb-6">
+      <div>
+        <h2 class="text-xl font-black text-amber-400 font-pirate">Solana Airdrop & $CHEDDAR</h2>
+        <p class="text-xs text-slate-400">Snapshot qualification & wallet verification.</p>
+      </div>
+
+      <!-- Pump.fun Gold Card -->
+      <div class="p-4 bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border-2 border-amber-500/50 rounded-3xl shadow-xl space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">💊</span>
+            <div>
+              <h3 class="text-base font-black text-amber-400 font-pirate">$CHEDDAR on Pump.fun</h3>
+              <p class="text-[11px] text-slate-300">Organic pirate memecoin on Solana</p>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">LIVE</span>
+        </div>
+        <div class="bg-slate-950/80 rounded-2xl p-3 border border-amber-500/30">
+          <div class="flex items-center justify-between mb-1">
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Contract Address (Solana)</div>
+            <button id="copy-ca-box" class="text-[10px] text-amber-300 hover:text-amber-200 font-bold underline">Copy Address</button>
+          </div>
+          <div class="font-mono text-xs text-amber-300 break-all select-all font-semibold">D9ZeLpkg134BSnwh1fkncyAmSqW7DBfzgqMcaKDcpump</div>
+        </div>
+        <button id="airdrop-pumpfun-btn" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-sm rounded-2xl shadow-xl active:scale-95 transition-transform">
+          Buy $CHEDDAR on Pump.fun 🚀
+        </button>
+      </div>
+
+      <!-- Connect Solana Wallet -->
+      <div class="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 shadow-lg space-y-3">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">👛</span>
+          <div>
+            <h3 class="text-sm font-bold text-slate-100">Connect Solana Wallet</h3>
+            <p class="text-[11px] text-slate-400">Save address for future snapshot distribution.</p>
+          </div>
+        </div>
+        <div class="space-y-2">
+          <input id="wallet-input" type="text" placeholder="Paste Solana public address (e.g. 7xK...)" class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-700 focus:border-amber-400 rounded-xl text-xs text-slate-100 font-mono outline-none">
+          <button id="save-wallet-btn" class="w-full py-2.5 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-amber-300 font-bold text-xs rounded-xl border border-amber-500/30 active:scale-95 transition-all">
+            Save & Connect Wallet
+          </button>
+          <div id="wallet-linked-text" class="text-xs text-emerald-400 font-medium hidden">✅ Linked: <span id="linked-addr" class="font-mono"></span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="flex-none bg-slate-950/95 border-t border-amber-500/20 px-2 py-2 z-20 backdrop-blur-md">
+    <div class="grid grid-cols-5 gap-1 max-w-sm mx-auto">
+      <button class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-amber-400 bg-amber-500/20 font-bold scale-105 transition-all" data-tab="tapper">
+        <span class="text-xl">🧀</span>
+        <span class="text-[10px] mt-0.5">Pillage</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-400 transition-all" data-tab="upgrades">
+        <span class="text-xl">⚓</span>
+        <span class="text-[10px] mt-0.5">Shipyard</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-400 transition-all" data-tab="arcade">
+        <span class="text-xl">⛵</span>
+        <span class="text-[10px] mt-0.5">Arcade</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-400 transition-all" data-tab="crew">
+        <span class="text-xl">🎁</span>
+        <span class="text-[10px] mt-0.5">Crew</span>
+      </button>
+      <button class="nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl text-slate-400 transition-all" data-tab="airdrop">
+        <span class="text-xl">🪂</span>
+        <span class="text-[10px] mt-0.5">Airdrop</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Offline Accumulation Modal -->
+  <div id="offline-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border-2 border-amber-500/60 rounded-3xl p-6 max-w-sm w-full text-center shadow-2xl">
+      <div class="text-5xl mb-2 animate-bounce">🏴‍☠️🧀</div>
+      <h3 class="text-2xl font-black text-amber-400 font-pirate mb-1">Welcome back, Captain!</h3>
+      <p class="text-xs text-slate-300 mb-4">Your sailor mice pillaged the high seas while you were away!</p>
+      <div class="p-3.5 bg-slate-950 rounded-2xl border border-amber-500/30 mb-5">
+        <div class="text-xs text-slate-400 mb-1">Time Ashore: <strong id="offline-time" class="text-slate-200">1h 30m</strong></div>
+        <div class="text-3xl font-black text-amber-400 font-mono" id="offline-amount">+0</div>
+        <div class="text-[10px] text-amber-300 uppercase font-bold mt-0.5">$CHEDDAR Accumulated</div>
+      </div>
+      <button id="claim-offline-btn" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-sm rounded-2xl shadow-xl active:scale-95 transition-transform">
+        Claim Bounty! 🧀🏴‍☠️
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ================= STRICT PROJECT CONSTANTS =================
+    const CA = "D9ZeLpkg134BSnwh1fkncyAmSqW7DBfzgqMcaKDcpump";
+    const PUMP_URL = "https://pump.fun/coin/" + CA;
+    const BOT_USER = "CaptainCheddarGamebot";
+    const REFERRAL_SHARE_TEXT = "Ahoy mate! Join Captain Cheddar's crew, tap cheese, and prepare for the Solana bounty! 🧀⚓️";
+
+    const UPGRADES_DEF = [
+      { id: 'sailor_mice', name: 'Sailor Mice', icon: '🐭', desc: 'Nimble cheese-loving deckhands.', baseCost: 150, mult: 1.15, type: 'pph', val: 80 },
+      { id: 'better_sails', name: 'Better Sails', icon: '⛵', desc: 'Wind-catching sails woven from aged cloth.', baseCost: 650, mult: 1.18, type: 'pph', val: 350 },
+      { id: 'cannon_cheddar', name: 'Cannon Cheddar', icon: '💣', desc: 'Sulfur-infused cheese wheels that blast rivals.', baseCost: 2800, mult: 1.20, type: 'pph', val: 1400 },
+      { id: 'flag_pumpfun', name: 'Flag of pump.fun', icon: '🚩', desc: 'Hoisting the pillaging green flag on Solana.', baseCost: 12000, mult: 1.22, type: 'pph', val: 5500 },
+      { id: 'gilded_spyglass', name: 'Gilded Spyglass', icon: '🔭', desc: 'Spots floating cheddar flotillas.', baseCost: 45000, mult: 1.24, type: 'pph', val: 18000 },
+      { id: 'kraken_repeller', name: 'Kraken Repeller', icon: '🦑', desc: 'Spiced smoke keeping deep-sea terrors away.', baseCost: 180000, mult: 1.25, type: 'pph', val: 65000 },
+      { id: 'sharp_cutlass', name: 'Sharp Cutlass', icon: '⚔️', desc: 'Slices extra cheese chunks per tap.', baseCost: 100, mult: 1.35, type: 'tap', val: 1 },
+      { id: 'golden_hook', name: 'Golden Hook', icon: '🪝', desc: 'Plucks double treasure nuggets.', baseCost: 1200, mult: 1.40, type: 'tap', val: 3 },
+      { id: 'energy_barrel', name: 'Grog & Cheese Barrel', icon: '🪵', desc: 'Expands stamina by +300 max energy.', baseCost: 350, mult: 1.28, type: 'maxEnergy', val: 300 }
+    ];
+
+    const STREAKS = [500, 1500, 4000, 10000, 25000, 60000, 150000];
+
+    // ================= APPLICATION STATE =================
+    let state = {
+      cheddar: 0,
+      totalMined: 0,
+      pph: 0,
+      energy: 1000,
+      maxEnergy: 1000,
+      energyRegen: 2,
+      tapPower: 1,
+      upgrades: {},
+      dailyStreak: { current: 0, lastClaim: '' },
+      wallet: '',
+      userId: 'capt_' + Math.floor(100000 + Math.random() * 900000),
+      crewCount: 0,
+      arcadeBest: 0,
+      sound: true
+    };
+
+    // ================= AUDIO SYNTHESIZER =================
+    let audioCtx = null;
+    function playTone(freq, type, duration, vol) {
+      if (!state.sound) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type || 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // ================= INIT TELEGRAM MINI APP =================
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        state.userId = String(tg.initDataUnsafe.user.id);
+      }
+    }
+    document.getElementById('user-display-id').textContent = 'ID: ' + state.userId;
+
+    // Load saved progress
+    try {
+      const raw = localStorage.getItem('cheddar_save_standalone');
+      if (raw) {
+        const d = JSON.parse(raw);
+        state = { ...state, ...d };
+        const now = Date.now();
+        const elapsed = Math.max(0, (now - (d.lastActive || now)) / 1000);
+        if (elapsed > 60 && state.pph > 0) {
+          const capped = Math.min(elapsed, 3 * 3600);
+          const earned = Math.floor((state.pph / 3600) * capped);
+          if (earned > 0) {
+            document.getElementById('offline-modal').classList.remove('hidden');
+            document.getElementById('offline-amount').textContent = '+' + earned.toLocaleString();
+            document.getElementById('offline-time').textContent = Math.floor(capped / 3600) + 'h ' + Math.floor((capped % 3600) / 60) + 'm';
+            document.getElementById('claim-offline-btn').onclick = () => {
+              state.cheddar += earned;
+              state.totalMined += earned;
+              document.getElementById('offline-modal').classList.add('hidden');
+              playTone(600, 'sine', 0.2, 0.2);
+              updateUI();
+            };
+          }
+        }
+      }
+    } catch (e) {}
+
+    function saveState() {
+      state.lastActive = Date.now();
+      localStorage.setItem('cheddar_save_standalone', JSON.stringify(state));
+    }
+    setInterval(saveState, 5000);
+
+    function recalculateStats() {
+      let p = 0, t = 1, me = 1000;
+      UPGRADES_DEF.forEach(u => {
+        const lvl = state.upgrades[u.id] || 0;
+        if (lvl > 0) {
+          if (u.type === 'pph') p += u.val * lvl;
+          if (u.type === 'tap') t += u.val * lvl;
+          if (u.type === 'maxEnergy') me += u.val * lvl;
+        }
+      });
+      state.pph = p;
+      state.tapPower = t;
+      state.maxEnergy = me;
+    }
+    recalculateStats();
+
+    // Passive loop
+    setInterval(() => {
+      if (state.pph > 0) {
+        const inc = state.pph / 3600;
+        state.cheddar += inc;
+        state.totalMined += inc;
+      }
+      state.energy = Math.min(state.maxEnergy, state.energy + state.energyRegen);
+      updateUI();
+    }, 1000);
+
+    const PIRATE_RANKS = [
+      { name: 'Cheese Deckhand', minCheddar: 0, badge: '🧀' },
+      { name: 'Deck Swabber', minCheddar: 5000, badge: '⚓' },
+      { name: 'Buccaneer', minCheddar: 25000, badge: '🗡️' },
+      { name: 'Quartermaster', minCheddar: 100000, badge: '📜' },
+      { name: 'Sea Marauder', minCheddar: 500000, badge: '💣' },
+      { name: 'Captain Corsaire', minCheddar: 2000000, badge: '🚢' },
+      { name: 'Lord of pump.fun', minCheddar: 10000000, badge: '🏴‍☠️' },
+      { name: 'Pirate King of Solana', minCheddar: 50000000, badge: '👑' }
+    ];
+
+    function getRank(totalMined) {
+      for (let i = PIRATE_RANKS.length - 1; i >= 0; i--) {
+        if (totalMined >= PIRATE_RANKS[i].minCheddar) {
+          return PIRATE_RANKS[i];
+        }
+      }
+      return PIRATE_RANKS[0];
+    }
+
+    function updateUI() {
+      document.getElementById('cheddar-val').textContent = Math.floor(state.cheddar).toLocaleString();
+      document.getElementById('pph-val').textContent = '+' + Math.floor(state.pph).toLocaleString();
+      document.getElementById('tap-yield-val').textContent = '+' + state.tapPower + ' $CHEDDAR';
+      document.getElementById('energy-val').textContent = Math.floor(state.energy);
+      document.getElementById('max-energy-val').textContent = state.maxEnergy;
+      document.getElementById('energy-fill').style.width = Math.min(100, (state.energy / state.maxEnergy) * 100) + '%';
+
+      const curRank = getRank(state.totalMined);
+      const rankEl = document.getElementById('rank-name');
+      const badgeEl = document.getElementById('rank-badge');
+      if (rankEl) rankEl.textContent = curRank.name;
+      if (badgeEl) badgeEl.textContent = curRank.badge;
+
+      const bestEl = document.getElementById('arcade-best');
+      if (bestEl) bestEl.textContent = (state.arcadeBest || 0).toLocaleString();
+
+      const crewCountEl = document.getElementById('crew-count');
+      if (crewCountEl) crewCountEl.textContent = `${state.crewCount || 0} Sailors`;
+      const crewBountyEl = document.getElementById('crew-bounty');
+      if (crewBountyEl) crewBountyEl.textContent = `+${((state.crewCount || 0) * 5000).toLocaleString()} $CHEDDAR`;
+    }
+    updateUI();
+
+    // ================= PILLAGE / TAP MECHANIC =================
+    const mascotBtn = document.getElementById('mascot-tap-btn');
+    mascotBtn.addEventListener('pointerdown', (e) => {
+      if (state.energy < 1) {
+        document.getElementById('energy-status').classList.remove('hidden');
+        setTimeout(() => document.getElementById('energy-status').classList.add('hidden'), 2000);
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+        }
+        return;
+      }
+      state.energy -= 1;
+      const isCrit = Math.random() < 0.12;
+      const gain = state.tapPower * (isCrit ? 2 : 1);
+      state.cheddar += gain;
+      state.totalMined += gain;
+
+      playTone(isCrit ? 880 : 560, isCrit ? 'triangle' : 'sine', 0.08, 0.2);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred(isCrit ? 'heavy' : 'medium');
+      }
+
+      // Floating number animation
+      const rect = mascotBtn.getBoundingClientRect();
+      const floatEl = document.createElement('div');
+      floatEl.className = 'absolute font-black font-mono floating-text text-xl ' + (isCrit ? 'text-yellow-200 text-2xl font-pirate' : 'text-amber-400');
+      floatEl.textContent = isCrit ? 'CRIT! +' + gain : '+' + gain;
+      floatEl.style.left = (e.clientX - rect.left || 100) + 'px';
+      floatEl.style.top = (e.clientY - rect.top || 100) + 'px';
+      document.getElementById('floating-container').appendChild(floatEl);
+      setTimeout(() => floatEl.remove(), 850);
+
+      updateUI();
+    });
+
+    // ================= UPGRADES LIST =================
+    function renderUpgrades() {
+      const container = document.getElementById('upgrades-list');
+      container.innerHTML = '';
+      UPGRADES_DEF.forEach(u => {
+        const lvl = state.upgrades[u.id] || 0;
+        const cost = Math.floor(u.baseCost * Math.pow(u.mult, lvl));
+        const canAfford = state.cheddar >= cost;
+
+        const card = document.createElement('div');
+        card.className = 'flex items-center justify-between p-3 bg-slate-900/80 border border-slate-800 rounded-2xl shadow-sm';
+        card.innerHTML = `
+          <div class="flex items-center gap-3 min-w-0 pr-2">
+            <div class="w-11 h-11 rounded-2xl bg-slate-950 border border-amber-500/30 flex items-center justify-center text-xl shrink-0">
+              ${u.icon}
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h4 class="text-sm font-bold text-slate-100 truncate">${u.name}</h4>
+                <span class="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono font-bold text-[10px]">Lvl ${lvl}</span>
+              </div>
+              <p class="text-[11px] text-slate-400 truncate">${u.desc}</p>
+              <div class="text-[11px] font-bold ${u.type === 'pph' ? 'text-emerald-400' : 'text-amber-400'} font-mono">
+                +${u.val.toLocaleString()} ${u.type === 'pph' ? '/ hr' : u.type === 'tap' ? 'Tap' : 'Energy'}
+              </div>
+            </div>
+          </div>
+          <button class="buy-btn px-4 py-2 rounded-xl text-xs font-black shrink-0 transition-transform ${canAfford ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 active:scale-95' : 'bg-slate-800 text-slate-500 opacity-60'}">
+            ${cost.toLocaleString()}
+          </button>
+        `;
+        card.querySelector('.buy-btn').onclick = () => {
+          if (state.cheddar >= cost) {
+            state.cheddar -= cost;
+            state.upgrades[u.id] = lvl + 1;
+            recalculateStats();
+            playTone(700, 'triangle', 0.15, 0.2);
+            renderUpgrades();
+            updateUI();
+          }
+        };
+        container.appendChild(card);
+      });
+    }
+
+    // ================= TAB NAVIGATION =================
+    const tabs = ['tapper', 'upgrades', 'arcade', 'crew', 'airdrop'];
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.onclick = () => {
+        const target = btn.dataset.tab;
+        tabs.forEach(t => {
+          const el = document.getElementById('view-' + t);
+          if (el) el.classList.toggle('hidden', t !== target);
+        });
+        document.querySelectorAll('.nav-btn').forEach(b => {
+          const active = b.dataset.tab === target;
+          b.className = 'nav-btn flex flex-col items-center justify-center py-1.5 rounded-2xl transition-all ' +
+            (active ? 'text-amber-400 bg-amber-500/20 font-bold scale-105' : 'text-slate-400');
+        });
+        if (target === 'upgrades') renderUpgrades();
+        if (target === 'crew') renderStreak();
+        playTone(400, 'sine', 0.05, 0.1);
+      };
+    });
+
+    // Sound toggle
+    const soundBtn = document.getElementById('sound-btn');
+    if (soundBtn) {
+      soundBtn.onclick = () => {
+        state.sound = !state.sound;
+        soundBtn.textContent = state.sound ? '🔊' : '🔇';
+      };
+    }
+
+    // ================= PUMP.FUN INTEGRATION =================
+    const triggerPumpfun = () => {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) {
+        window.Telegram.WebApp.openLink(PUMP_URL);
+      } else {
+        window.open(PUMP_URL, '_blank');
+      }
+    };
+    document.getElementById('pumpfun-btn').onclick = triggerPumpfun;
+    document.getElementById('airdrop-pumpfun-btn').onclick = triggerPumpfun;
+
+    // ================= COPY CONTRACT ADDRESS =================
+    const copyAddressHandler = (btnElement) => {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(CA).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = CA;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+          });
+        } else {
+          const ta = document.createElement('textarea');
+          ta.value = CA;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+        }
+      } catch (e) {}
+      const prev = btnElement.textContent;
+      btnElement.textContent = 'Copied! 🧀';
+      setTimeout(() => btnElement.textContent = prev, 2000);
+      playTone(750, 'sine', 0.08, 0.15);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+      }
+    };
+    document.getElementById('copy-ca-top').onclick = function() { copyAddressHandler(this); };
+    document.getElementById('copy-ca-box').onclick = function() { copyAddressHandler(this); };
+
+    // ================= SOLANA WALLET SAVE =================
+    document.getElementById('save-wallet-btn').onclick = () => {
+      const val = document.getElementById('wallet-input').value.trim();
+      if (val.length < 32 || val.length > 44) {
+        alert('Please enter a valid Solana public key.');
+        return;
+      }
+      state.wallet = val;
+      document.getElementById('wallet-linked-text').classList.remove('hidden');
+      document.getElementById('linked-addr').textContent = val;
+      playTone(650, 'sine', 0.1, 0.2);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+    };
+
+    // ================= 7-DAY STREAKS =================
+    function renderStreak() {
+      const grid = document.getElementById('streak-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const isClaimedToday = state.dailyStreak && state.dailyStreak.lastClaim === todayStr;
+      const cur = (state.dailyStreak && state.dailyStreak.current) || 0;
+      const label = document.getElementById('streak-tracker-label');
+      if (label) label.textContent = `Day ${Math.min(7, cur + 1)} / 7`;
+
+      STREAKS.forEach((amt, idx) => {
+        const dayNum = idx + 1;
+        const isPast = dayNum <= cur;
+        const isCurrent = dayNum === cur + 1 && !isClaimedToday;
+        const cell = document.createElement('div');
+        cell.className = `p-2 rounded-xl border text-center flex flex-col items-center justify-center ${
+          isPast ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' :
+          isCurrent ? 'bg-yellow-500/30 border-yellow-400 text-yellow-200 animate-pulse' :
+          'bg-slate-950/60 border-slate-800 text-slate-500'
+        }`;
+        cell.innerHTML = `
+          <div class="text-[10px] font-bold">Day ${dayNum}</div>
+          <div class="text-xs my-0.5">${dayNum === 7 ? '👑' : '🧀'}</div>
+          <div class="text-[9px] font-mono font-bold truncate">+${(amt / 1000).toFixed(0)}k</div>
+        `;
+        grid.appendChild(cell);
+      });
+
+      const claimBtn = document.getElementById('claim-streak-btn');
+      if (claimBtn) {
+        if (isClaimedToday) {
+          claimBtn.disabled = true;
+          claimBtn.className = 'w-full py-2.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-500 opacity-60 cursor-not-allowed';
+          claimBtn.textContent = 'Claimed for Today! Return tomorrow ⚓';
+        } else {
+          claimBtn.disabled = false;
+          claimBtn.className = 'w-full py-2.5 rounded-xl text-xs font-black bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 shadow-md active:scale-95 transition-transform';
+          claimBtn.textContent = 'Claim Daily Bounty! 🧀';
+        }
+      }
+    }
+
+    const claimStreakBtn = document.getElementById('claim-streak-btn');
+    if (claimStreakBtn) {
+      claimStreakBtn.onclick = () => {
+        const todayStr = new Date().toISOString().slice(0, 10);
+        if (state.dailyStreak && state.dailyStreak.lastClaim === todayStr) return;
+        const nextDay = (((state.dailyStreak && state.dailyStreak.current) || 0) % 7) + 1;
+        const reward = STREAKS[nextDay - 1];
+        state.cheddar += reward;
+        state.totalMined += reward;
+        state.dailyStreak = { current: nextDay, lastClaim: todayStr };
+        playTone(880, 'sine', 0.2, 0.25);
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
+        renderStreak();
+        updateUI();
+      };
+    }
+
+    // ================= REFERRAL CREW RECRUITMENT =================
+    const inviteCrewBtn = document.getElementById('invite-crew-btn');
+    if (inviteCrewBtn) {
+      inviteCrewBtn.onclick = () => {
+        const startAppParam = `ref_${state.userId}`;
+        const inviteUrl = `https://t.me/${BOT_USER}/play?startapp=${startAppParam}`;
+        const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(inviteUrl)}&text=${encodeURIComponent(REFERRAL_SHARE_TEXT)}`;
+
+        if (window.Telegram?.WebApp?.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(telegramShareUrl);
+        } else {
+          window.open(telegramShareUrl, '_blank');
+        }
+        try {
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(inviteUrl);
+          }
+        } catch (e) {}
+      };
+    }
+
+    const copyRefBtn = document.getElementById('copy-ref-btn');
+    if (copyRefBtn) {
+      copyRefBtn.onclick = () => {
+        const inviteUrl = `https://t.me/${BOT_USER}/play?startapp=ref_${state.userId}`;
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(inviteUrl).catch(() => {
+              const ta = document.createElement('textarea');
+              ta.value = inviteUrl;
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              ta.remove();
+            });
+          } else {
+            const ta = document.createElement('textarea');
+            ta.value = inviteUrl;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+          }
+        } catch (e) {}
+        copyRefBtn.textContent = 'Copied! 📋';
+        setTimeout(() => copyRefBtn.textContent = 'Copy Link 📋', 2000);
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+        }
+      };
+    }
+    renderStreak();
+
+    // ================= ARCADE ENGINE: SPEEDOMETER, RAMPS, CANNONS & CAPTAIN CHEDDAR =================
+    const canvas = document.getElementById('arcade-canvas');
+    const ctx = canvas.getContext('2d');
+    let arcRunning = false;
+    let shipX = 180, targetX = 180, shipTilt = 0, invulnerable = 0;
+    let arcScore = 0, arcLives = 3, arcCombo = 1, arcComboCount = 0;
+    let arcSpeed = 240, baseSpeed = 240, boostTimer = 0, jumpTimer = 0;
+    let arcItems = [], arcHazards = [], arcRamps = [], arcCannonballs = [], arcParticles = [], arcFloatings = [];
+    let cannonCooldown = 0, nextAutoCannon = 1.35;
+
+    let arcDecors = [
+      { x: 50, y: 80, size: 36, speed: 0.45 },
+      { x: 310, y: 220, size: 42, speed: 0.5 },
+      { x: 130, y: 390, size: 28, speed: 0.4 }
+    ];
+    let arcWaves = [
+      { y: 0, speed: 0.6, amp: 12, freq: 0.02, phase: 0 },
+      { y: 150, speed: 0.8, amp: 16, freq: 0.025, phase: 1.2 },
+      { y: 300, speed: 0.9, amp: 14, freq: 0.022, phase: 2.5 }
+    ];
+    let lastSpawn = 0, lastRampSpawn = 0;
+
+    function fireArcadeCannons() {
+      if (!arcRunning || cannonCooldown > 0) return;
+      cannonCooldown = 0.25;
+      [-12, 12].forEach(ox => {
+        arcCannonballs.push({
+          x: shipX + ox,
+          y: 340,
+          vx: (ox > 0 ? 15 : -15),
+          vy: -680,
+          radius: 4.5
+        });
+      });
+      playTone(190, 'square', 0.16, 0.22);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+      }
+    }
+
+    canvas.addEventListener('pointermove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width) * 360;
+    });
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width) * 360;
+      if (arcRunning) fireArcadeCannons();
+    });
+
+    const startArcade = () => {
+      arcRunning = true;
+      arcScore = 0;
+      arcLives = 3;
+      arcCombo = 1;
+      arcComboCount = 0;
+      arcSpeed = 240;
+      boostTimer = 0;
+      jumpTimer = 0;
+      arcCannonballs = [];
+      cannonCooldown = 0;
+      nextAutoCannon = 1.2;
+      arcItems = [];
+      arcHazards = [];
+      arcRamps = [];
+      arcParticles = [];
+      arcFloatings = [];
+      document.getElementById('arcade-overlay').classList.add('hidden');
+      playTone(550, 'triangle', 0.1, 0.2);
+    };
+
+    const startBtn = document.getElementById('arcade-start-btn');
+    const arcOverlay = document.getElementById('arcade-overlay');
+    if (startBtn) {
+      startBtn.onclick = (e) => { e.stopPropagation(); startArcade(); };
+      startBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); startArcade(); });
+    }
+    if (arcOverlay) {
+      arcOverlay.onclick = startArcade;
+      arcOverlay.addEventListener('pointerdown', startArcade);
+    }
+
+    let lastArcTime = performance.now();
+    function arcadeLoop(now) {
+      const dt = Math.min((now - lastArcTime) / 1000, 0.08);
+      lastArcTime = now;
+
+      // Deep Ocean Gradient (#0077b6 to #00b4d8)
+      const grad = ctx.createLinearGradient(0, 0, 0, 480);
+      grad.addColorStop(0, '#0077b6');
+      grad.addColorStop(1, '#00b4d8');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 360, 480);
+
+      // Speed boost and jump timers
+      if (arcRunning) {
+        if (boostTimer > 0) boostTimer = Math.max(0, boostTimer - dt);
+        if (jumpTimer > 0) jumpTimer = Math.max(0, jumpTimer - dt);
+
+        const targetSpeed = boostTimer > 0 ? 560 : Math.min(240 + arcScore * 0.45, 480);
+        arcSpeed += (targetSpeed - arcSpeed) * Math.min(1, 6 * dt);
+
+        // Update Top Speedometer HUD
+        const knots = Math.floor(arcSpeed / 12);
+        const gaugePercent = Math.min(100, Math.max(15, ((arcSpeed - 200) / 360) * 100));
+        document.getElementById('arcade-knots').textContent = knots;
+        document.getElementById('arcade-speed-gauge').style.width = gaugePercent + '%';
+        const boostTag = document.getElementById('boost-tag');
+        if (boostTag) boostTag.classList.toggle('hidden', boostTimer <= 0);
+      }
+
+      const moveDist = arcRunning ? arcSpeed * dt : 40 * dt;
+
+      // Distant islands
+      arcDecors.forEach(d => {
+        if (arcRunning) {
+          d.y += moveDist * d.speed;
+          if (d.y > 520) { d.y = -60; d.x = 30 + Math.random() * 300; }
+        }
+        ctx.fillStyle = 'rgba(2, 62, 125, 0.28)';
+        ctx.beginPath();
+        ctx.ellipse(d.x, d.y, d.size, d.size * 0.45, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Animated wave crests
+      arcWaves.forEach(w => {
+        if (arcRunning) {
+          w.y += moveDist * 0.4;
+          if (w.y > 480) w.y = -25;
+        }
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.14)';
+        ctx.beginPath();
+        ctx.moveTo(0, w.y);
+        for (let x = 0; x <= 360; x += 15) {
+          ctx.lineTo(x, w.y + Math.sin(x * w.freq + now * 0.001 * w.speed + w.phase) * w.amp);
+        }
+        ctx.lineTo(360, 480);
+        ctx.lineTo(0, 480);
+        ctx.fill();
+      });
+
+      // Boost Speed Lines when rocketing
+      if (boostTimer > 0) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = 2.5;
+        for (let i = 0; i < 7; i++) {
+          const slx = (i * 52 + (now * 0.3) % 52) % 360;
+          const sly = (now * 1.8 + i * 85) % 520;
+          ctx.beginPath();
+          ctx.moveTo(slx, sly);
+          ctx.lineTo(slx, sly + 45);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      if (arcRunning) {
+        const dx = targetX - shipX;
+        shipX += dx * Math.min(1, dt * 14);
+        shipX = Math.max(30, Math.min(330, shipX));
+        shipTilt += (Math.max(-0.25, Math.min(0.25, dx * 0.006)) - shipTilt) * Math.min(1, 12 * dt);
+        if (invulnerable > 0) invulnerable -= dt;
+
+        // Auto cannon reloader
+        if (cannonCooldown > 0) cannonCooldown -= dt;
+        nextAutoCannon -= dt;
+        if (nextAutoCannon <= 0) {
+          nextAutoCannon = boostTimer > 0 ? 0.75 : 1.35;
+          fireArcadeCannons();
+        }
+
+        // Spawn Collectibles & Hazards
+        lastSpawn += dt;
+        if (lastSpawn > 0.6) {
+          lastSpawn = 0;
+          const isGold = Math.random() < 0.22;
+          arcItems.push({
+            x: 35 + Math.random() * 290,
+            y: -25,
+            vy: arcSpeed * 0.85,
+            gold: isGold,
+            rot: 0
+          });
+
+          if (Math.random() < 0.55) {
+            const isCat = arcScore > 50 && Math.random() < 0.4;
+            arcHazards.push({
+              x: 35 + Math.random() * 290,
+              y: -35,
+              vy: isCat ? arcSpeed * 0.95 : arcSpeed * 0.8,
+              type: isCat ? 'cat' : 'mine',
+              width: isCat ? 36 : 28,
+              height: isCat ? 50 : 28
+            });
+          }
+        }
+
+        // Spawn Speed Boost Ramps
+        lastRampSpawn += dt;
+        if (lastRampSpawn > 5.5) {
+          lastRampSpawn = 0;
+          arcRamps.push({
+            x: 50 + Math.random() * 260,
+            y: -40,
+            vy: arcSpeed * 0.9,
+            width: 58,
+            height: 32,
+            passed: false
+          });
+        }
+      }
+
+      // 1. Boost Ramps Rendering & Collision
+      for (let i = arcRamps.length - 1; i >= 0; i--) {
+        const rm = arcRamps[i];
+        if (arcRunning) rm.y += moveDist;
+
+        ctx.save();
+        ctx.translate(rm.x, rm.y);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rm.width / 2 + 5, rm.height / 2 + 4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.fillStyle = '#78350f';
+        ctx.fillRect(-rm.width / 2, -rm.height / 2, rm.width, rm.height);
+        ctx.fillStyle = '#92400e';
+        ctx.fillRect(-rm.width / 2 + 2, -rm.height / 2 + 2, rm.width - 4, rm.height - 4);
+
+        // Glowing Boost Chevrons
+        const pulse = (Math.sin(now * 0.015) + 1) * 0.5;
+        ctx.fillStyle = rm.passed ? '#64748b' : `rgba(250, 204, 21, ${0.75 + pulse * 0.25})`;
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 1.5;
+        [-16, 0, 16].forEach(cx => {
+          ctx.beginPath();
+          ctx.moveTo(cx - 6, 6);
+          ctx.lineTo(cx, -6);
+          ctx.lineTo(cx + 6, 6);
+          ctx.lineTo(cx + 3, 6);
+          ctx.lineTo(cx, -2);
+          ctx.lineTo(cx - 3, 6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('⚡ BOOST RAMP ⚡', 0, rm.height / 2 + 7);
+        ctx.restore();
+
+        // Check if player runs over ramp: Trigger Massive Jump & Boost!
+        if (arcRunning && !rm.passed && Math.hypot(rm.x - shipX, rm.y - 390) < 36) {
+          rm.passed = true;
+          boostTimer = 3.5;
+          jumpTimer = 1.1;
+          arcScore += 30;
+          playTone(840, 'triangle', 0.25, 0.25);
+          if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+          }
+          arcFloatings.push({ text: '🚀 MEGA BOOST JUMP! +30', x: shipX, y: 350, alpha: 1, color: '#facc15' });
+        }
+        if (rm.y > 510) arcRamps.splice(i, 1);
+      }
+
+      // 2. Cannonballs in Flight & Collision with Obstacles
+      for (let i = arcCannonballs.length - 1; i >= 0; i--) {
+        const cb = arcCannonballs[i];
+        if (arcRunning) {
+          cb.x += cb.vx * dt;
+          cb.y += cb.vy * dt;
+        }
+
+        // Fiery glow halo & dark iron shot
+        ctx.save();
+        ctx.translate(cb.x, cb.y);
+        ctx.fillStyle = 'rgba(245, 158, 11, 0.45)';
+        ctx.beginPath();
+        ctx.arc(0, 0, cb.radius + 3.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.arc(0, 0, cb.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        let hitObstacle = false;
+        for (let j = arcHazards.length - 1; j >= 0; j--) {
+          const obs = arcHazards[j];
+          if (Math.hypot(cb.x - obs.x, cb.y - obs.y) < (obs.width / 2 + cb.radius + 6)) {
+            hitObstacle = true;
+            for (let p = 0; p < 14; p++) {
+              arcParticles.push({
+                x: obs.x,
+                y: obs.y,
+                vx: (Math.random() - 0.5) * 160,
+                vy: (Math.random() - 0.5) * 160,
+                life: 0.35,
+                color: Math.random() < 0.5 ? '#f59e0b' : '#ef4444'
+              });
+            }
+            playTone(140, 'square', 0.25, 0.3);
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+              window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+            }
+
+            const pts = obs.type === 'cat' ? 50 : 25;
+            arcScore += pts;
+            document.getElementById('arcade-score').textContent = arcScore;
+            arcFloatings.push({ text: `💥 BOOM! +${pts}`, x: obs.x, y: obs.y, alpha: 1, color: '#f97316' });
+            arcHazards.splice(j, 1);
+            break;
+          }
+        }
+
+        if (hitObstacle || cb.y < -30) {
+          arcCannonballs.splice(i, 1);
+        }
+      }
+
+      // 3. Hazards (Naval Mines & Enemy Cat Ships)
+      const isAirborne = jumpTimer > 0;
+      for (let i = arcHazards.length - 1; i >= 0; i--) {
+        const h = arcHazards[i];
+        if (arcRunning) h.y += (moveDist * 0.9);
+
+        ctx.save();
+        ctx.translate(h.x, h.y);
+        if (h.type === 'mine') {
+          // Naval mine with spikes and red light
+          ctx.strokeStyle = '#374151';
+          ctx.lineWidth = 2.5;
+          for (let sp = 0; sp < 8; sp++) {
+            const ang = (sp * Math.PI) / 4;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(ang) * 8, Math.sin(ang) * 8);
+            ctx.lineTo(Math.cos(ang) * 16, Math.sin(ang) * 16);
+            ctx.stroke();
+          }
+          ctx.fillStyle = '#1f2937';
+          ctx.beginPath();
+          ctx.arc(0, 0, 13, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ef4444';
+          ctx.beginPath();
+          ctx.arc(0, -13, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#f87171';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('☠', 0, 3);
+        } else {
+          // Black Cat Ship
+          ctx.fillStyle = '#1a1d20';
+          ctx.beginPath();
+          ctx.moveTo(0, 32);
+          ctx.bezierCurveTo(22, 20, 24, -18, 14, -28);
+          ctx.lineTo(-14, -28);
+          ctx.bezierCurveTo(-24, -18, -22, 20, 0, 32);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = '#c1121f';
+          ctx.fillRect(-16, -16, 32, 16);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('☠', 0, -5);
+        }
+        ctx.restore();
+
+        // Player Collision: Mines can be jumped OVER when airborne!
+        if (arcRunning && invulnerable <= 0 && Math.hypot(h.x - shipX, h.y - 390) < 32) {
+          if (isAirborne && h.type === 'mine') {
+            arcFloatings.push({ text: 'JUMP OVER! 🪂', x: shipX, y: 350, alpha: 1, color: '#38bdf8' });
+          } else {
+            arcHazards.splice(i, 1);
+            arcLives--;
+            invulnerable = 1.6;
+            arcCombo = 1;
+            arcComboCount = 0;
+            playTone(130, 'sawtooth', 0.35, 0.3);
+            if (window.Telegram?.WebApp?.HapticFeedback) {
+              window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
+            }
+
+            if (arcLives <= 0) {
+              arcRunning = false;
+              state.cheddar += arcScore;
+              state.totalMined += arcScore;
+              state.arcadeBest = Math.max(state.arcadeBest || 0, arcScore);
+              document.getElementById('arcade-overlay').classList.remove('hidden');
+              document.getElementById('arcade-overlay-title').textContent = 'Shipwreck!';
+              document.getElementById('arcade-overlay-sub').textContent = 'Final Score: ' + arcScore + ' $CHEDDAR looted on the high seas!';
+              updateUI();
+            }
+          }
+        }
+        if (h.y > 510) arcHazards.splice(i, 1);
+      }
+
+      // 4. Collectibles (Cheddar Triangles & Golden Helms)
+      for (let i = arcItems.length - 1; i >= 0; i--) {
+        const item = arcItems[i];
+        if (arcRunning) { item.y += moveDist; item.rot += dt * 2.5; }
+
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.rot);
+        if (item.gold) {
+          ctx.fillStyle = '#ffd700';
+          ctx.beginPath();
+          ctx.arc(0, 0, 14, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#b45309';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = '#d90429';
+          ctx.beginPath();
+          ctx.arc(0, 0, 6, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          ctx.fillStyle = '#ffc300';
+          ctx.beginPath();
+          ctx.moveTo(0, -15);
+          ctx.lineTo(14, 12);
+          ctx.lineTo(-14, 12);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#b45309';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+          ctx.fillStyle = '#d97706';
+          ctx.beginPath();
+          ctx.arc(-3, 0, 2.5, 0, Math.PI * 2);
+          ctx.arc(3, 5, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        if (arcRunning && Math.hypot(item.x - shipX, item.y - 390) < 32) {
+          const pts = (item.gold ? 50 : 10) * arcCombo;
+          arcScore += pts;
+          arcComboCount++;
+          if (arcComboCount >= 10) arcCombo = 5;
+          else if (arcComboCount >= 6) arcCombo = 3;
+          else if (arcComboCount >= 3) arcCombo = 2;
+
+          document.getElementById('arcade-score').textContent = arcScore;
+          arcItems.splice(i, 1);
+          playTone(item.gold ? 880 : 587, 'triangle', 0.12, 0.2);
+          if (window.Telegram?.WebApp?.HapticFeedback) {
+            window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+          }
+        }
+        if (item.y > 510) arcItems.splice(i, 1);
+      }
+
+      // ==========================================
+      // CORSAIR PLAYER SHIP: CAPTAIN CHEDDAR
+      // ==========================================
+      const jumpProgress = jumpTimer > 0 ? Math.sin((1 - jumpTimer / 1.1) * Math.PI) : 0;
+      const jumpScale = 1 + jumpProgress * 0.35;
+
+      ctx.save();
+      ctx.translate(shipX, 390);
+      ctx.rotate(shipTilt);
+      if (invulnerable > 0 && Math.floor(invulnerable * 12) % 2 === 0) ctx.globalAlpha = 0.45;
+
+      const waveOffset = Math.sin(now * 0.008) * 2;
+
+      // 1. Water foam wake
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.beginPath();
+      ctx.ellipse(-14, 28 + waveOffset, 5, 12, 0.2, 0, Math.PI * 2);
+      ctx.ellipse(14, 28 - waveOffset, 5, 12, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 2. Soft ship shadow (shrinks and elevates during ramp jump)
+      ctx.save();
+      ctx.fillStyle = 'rgba(0, 20, 50, 0.35)';
+      ctx.beginPath();
+      const shadowOffsetY = 8 + jumpProgress * 24;
+      const shadowScale = Math.max(0.6, 1 - jumpProgress * 0.25);
+      ctx.ellipse(4, shadowOffsetY, 22 * shadowScale, 36 * shadowScale, shipTilt * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Apply 3D Jump Scale
+      ctx.scale(jumpScale, jumpScale);
+
+      // 3. Wooden Hull (Layered Oak Planks)
+      ctx.fillStyle = '#6b3710';
+      ctx.beginPath();
+      ctx.moveTo(0, -36);
+      ctx.bezierCurveTo(26, -20, 28, 18, 16, 28);
+      ctx.lineTo(-16, 28);
+      ctx.bezierCurveTo(-28, 18, -26, -20, 0, -36);
+      ctx.closePath();
+      ctx.fill();
+
+      // Inner Deck
+      ctx.fillStyle = '#b06d34';
+      ctx.beginPath();
+      ctx.moveTo(0, -31);
+      ctx.bezierCurveTo(21, -17, 22, 15, 12, 24);
+      ctx.lineTo(-12, 24);
+      ctx.bezierCurveTo(-22, 15, -21, -17, 0, -31);
+      ctx.closePath();
+      ctx.fill();
+
+      // Deck plank lines
+      ctx.strokeStyle = 'rgba(74, 36, 9, 0.45)';
+      ctx.lineWidth = 1;
+      [-7, 0, 7].forEach(px => {
+        ctx.beginPath();
+        ctx.moveTo(px * 0.5, -24);
+        ctx.lineTo(px, 22);
+        ctx.stroke();
+      });
+
+      // Gold gunwales
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Stern Railing
+      ctx.fillStyle = '#4a2409';
+      ctx.fillRect(-14, 23, 28, 5);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-15, 27, 30, 2);
+
+      // 4. Pointed Prow & Bowsprit
+      ctx.fillStyle = '#f59e0b';
+      ctx.beginPath();
+      ctx.moveTo(-3, -34);
+      ctx.lineTo(0, -46);
+      ctx.lineTo(3, -34);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // 5. Dual Forward Bow Cannons (Blasts foes ahead!)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-14, -34, 5.5, 13);
+      ctx.fillRect(8.5, -34, 5.5, 13);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-15, -35.5, 7.5, 3);
+      ctx.fillRect(7.5, -35.5, 7.5, 3);
+
+      // 6. Mast & Mainsail (Drawn BEFORE Captain Cheddar so sail doesn't cover him!)
+      ctx.fillStyle = '#542a0a';
+      ctx.fillRect(-2.5, -28, 5, 34);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-26, -24, 52, 3);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-27, -24.5, 2, 4);
+      ctx.fillRect(25, -24.5, 2, 4);
+
+      // Curved Billowing Sail
+      ctx.fillStyle = '#fdfbf7';
+      ctx.beginPath();
+      ctx.moveTo(-24, -22);
+      ctx.quadraticCurveTo(0, -26, 24, -22);
+      ctx.bezierCurveTo(28, -6, 22, 2, 18, 5);
+      ctx.quadraticCurveTo(0, 0, -18, 5);
+      ctx.bezierCurveTo(-22, 2, -28, -6, -24, -22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#e2d9cc';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Golden Cheese emblem on sail
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, -18);
+      ctx.lineTo(9, -4);
+      ctx.lineTo(-9, -4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Flag
+      const flagFlutter = Math.sin(now * 0.012) * 3;
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.moveTo(0, -30);
+      ctx.quadraticCurveTo(12 + flagFlutter, -34, 20 + flagFlutter, -29);
+      ctx.lineTo(14 + flagFlutter * 0.5, -26);
+      ctx.lineTo(20 + flagFlutter, -23);
+      ctx.quadraticCurveTo(10 + flagFlutter * 0.5, -26, 0, -25);
+      ctx.closePath();
+      ctx.fill();
+
+      // 7. Ship Helm / Steering Wheel
+      ctx.save();
+      ctx.translate(0, 10);
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, 0, 7, 0, Math.PI * 2);
+      ctx.stroke();
+      for (let i = 0; i < 6; i++) {
+        const ang = (i * Math.PI) / 3;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(Math.cos(ang) * 9, Math.sin(ang) * 9);
+        ctx.stroke();
+      }
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // 8. CAPTAIN CHEDDAR AT HELM (Warm caramel fur, cream muzzle, royal navy uniform, gold crown - NOT grey!)
+      ctx.save();
+      ctx.translate(0, 17);
+
+      // Royal Navy Blue Pirate Coat
+      ctx.fillStyle = '#24427f';
+      ctx.beginPath();
+      ctx.moveTo(-11, 4);
+      ctx.bezierCurveTo(-13, 11, 13, 11, 11, 4);
+      ctx.lineTo(8, -2);
+      ctx.lineTo(-8, -2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Gold Epaulets / Collar Trim
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(-11, -2, 4, 3);
+      ctx.fillRect(7, -2, 4, 3);
+
+      // Mouse Ears (Warm Tan/Caramel with Pink Inner Lobes)
+      ctx.fillStyle = '#c29b7a';
+      ctx.beginPath();
+      ctx.arc(-8, -9, 5.5, 0, Math.PI * 2);
+      ctx.arc(8, -9, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fca5a5';
+      ctx.beginPath();
+      ctx.arc(-8, -9, 3.5, 0, Math.PI * 2);
+      ctx.arc(8, -9, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Gold Earring
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.arc(-12.5, -9, 2.4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Mouse Head (Warm Tan/Caramel Fur)
+      ctx.fillStyle = '#c29b7a';
+      ctx.beginPath();
+      ctx.arc(0, -6, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Light Cream Snout / Muzzle
+      ctx.fillStyle = '#fae6d0';
+      ctx.beginPath();
+      ctx.ellipse(0, -8, 5, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Rosy Pink Cheeks
+      ctx.fillStyle = '#f87171';
+      ctx.globalAlpha = 0.65;
+      ctx.beginPath();
+      ctx.arc(-5, -5.5, 2, 0, Math.PI * 2);
+      ctx.arc(5, -5.5, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+
+      // Cute Pink Nose
+      ctx.fillStyle = '#f43f5e';
+      ctx.beginPath();
+      ctx.arc(0, -10, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Whiskers
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-2, -9); ctx.lineTo(-11, -11);
+      ctx.moveTo(-2, -8); ctx.lineTo(-11, -8);
+      ctx.moveTo(2, -9);  ctx.lineTo(11, -11);
+      ctx.moveTo(2, -8);  ctx.lineTo(11, -8);
+      ctx.stroke();
+
+      // Pirate Eye Patch (Matte Black)
+      ctx.strokeStyle = '#09090b';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-6, -9);
+      ctx.lineTo(5, -3);
+      ctx.stroke();
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.arc(-2.5, -6.5, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Big Dark Espresso Eye with White Highlight
+      ctx.fillStyle = '#3b2314';
+      ctx.beginPath();
+      ctx.arc(3.5, -6.5, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(3, -7, 1, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Majestic Golden Crown with Ruby & Sapphire Gems
+      ctx.fillStyle = '#facc15';
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-7, -12);
+      ctx.lineTo(-5, -19);
+      ctx.lineTo(0, -14);
+      ctx.lineTo(5, -19);
+      ctx.lineTo(7, -12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Ruby & Sapphire Gems on Crown
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(-3.5, -15, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#38bdf8';
+      ctx.beginPath();
+      ctx.arc(3.5, -15, 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore(); // Restore Cheddar
+
+      ctx.restore(); // Restore Ship
+
+      // 5. Floating text labels (BOOM, BOOST, etc.)
+      for (let i = arcFloatings.length - 1; i >= 0; i--) {
+        const fl = arcFloatings[i];
+        fl.y -= 35 * dt;
+        fl.alpha -= 0.8 * dt;
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, fl.alpha);
+        ctx.fillStyle = fl.color || '#facc15';
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(fl.text, fl.x, fl.y);
+        ctx.restore();
+        if (fl.alpha <= 0) arcFloatings.splice(i, 1);
+      }
+
+      // 6. Explosion particles
+      for (let i = arcParticles.length - 1; i >= 0; i--) {
+        const pt = arcParticles[i];
+        pt.x += pt.vx * dt;
+        pt.y += pt.vy * dt;
+        pt.life -= dt;
+        ctx.fillStyle = pt.color;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+        if (pt.life <= 0) arcParticles.splice(i, 1);
+      }
+
+      document.getElementById('arcade-lives').textContent = '❤️'.repeat(Math.max(0, arcLives));
+      requestAnimationFrame(arcadeLoop);
+    }
+    requestAnimationFrame(arcadeLoop);
+  </script>
+</body>
+</html>
