@@ -357,28 +357,12 @@
   </div>
 
   <script>
-    // ================= STRICT PROJECT CONSTANTS =================
+   // ================= STRICT PROJECT CONSTANTS =================
     const CA = "D9ZeLpkg134BSnwh1fkncyAmSqW7DBfzgqMcaKDcpump";
     const PUMP_URL = "https://pump.fun/coin/" + CA;
     const BOT_USER = "CaptainCheddarGamebot";
     const REFERRAL_SHARE_TEXT = "Ahoy mate! Join Captain Cheddar's crew, tap cheese, and prepare for the Solana bounty! 🧀⚓️";
-// ================= SUPABASE CLIENT =================
-    const SUPABASE_URL = "https://fskxqskoivdjopsjdtmb.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZza3hxc2tvaXZkam9wc2pkdG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDg4NTMsImV4cCI6MjEwODMyNDg1M30.82MUf2T20kgjvIaDdutnIHMvEFLVWELI_Lspt10Kzvc";
-    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-    async function syncToSupabase() {
-      if (!supabaseClient || !state || !state.userId) return;
-      try {
-        await supabaseClient.from('players').upsert({
-          telegram_id: String(state.userId),
-          score: Math.floor(state.cheddar),
-          wallet_address: state.wallet || null
-        }, { onConflict: 'telegram_id' });
-      } catch (e) {
-        console.error("Erreur sync :", e);
-      }
-    }
     const UPGRADES_DEF = [
       { id: 'sailor_mice', name: 'Sailor Mice', icon: '🐭', desc: 'Nimble cheese-loving deckhands.', baseCost: 150, mult: 1.15, type: 'pph', val: 80 },
       { id: 'better_sails', name: 'Better Sails', icon: '⛵', desc: 'Wind-catching sails woven from aged cloth.', baseCost: 650, mult: 1.18, type: 'pph', val: 350 },
@@ -411,6 +395,33 @@
       sound: true
     };
 
+    // ================= SUPABASE CLIENT =================
+    const SUPABASE_URL = "https://fskxqskoivdjopsjdtmb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZza3hxc2tvaXZkam9wc2pkdG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDg4NTMsImV4cCI6MjEwODMyNDg1M30.82MUf2T20kgjvIaDdutnIHMvEFLVWELI_Lspt10Kzvc";
+
+    function getSupabase() {
+      if (window._sbInstance) return window._sbInstance;
+      if (window.supabase && typeof window.supabase.createClient === 'function') {
+        window._sbInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        return window._sbInstance;
+      }
+      return null;
+    }
+
+    async function syncToSupabase() {
+      const client = getSupabase();
+      if (!client || !state || !state.userId) return;
+      try {
+        await client.from('players').upsert({
+          telegram_id: String(state.userId),
+          score: Math.floor(state.cheddar),
+          wallet_address: state.wallet || null
+        }, { onConflict: 'telegram_id' });
+      } catch (e) {
+        console.error("Erreur sync :", e);
+      }
+    } 
+   
     // ================= AUDIO SYNTHESIZER =================
     let audioCtx = null;
     function playTone(freq, type, duration, vol) {
