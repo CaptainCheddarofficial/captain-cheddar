@@ -365,12 +365,12 @@
 // ================= SUPABASE CLIENT =================
     const SUPABASE_URL = "https://fskxqskoivdjopsjdtmb.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZza3hxc2tvaXZkam9wc2pkdG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDg4NTMsImV4cCI6MjEwODMyNDg1M30.82MUf2T20kgjvIaDdutnIHMvEFLVWELI_Lspt10Kzvc";
-    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
     async function syncToSupabase() {
-      if (!supabase || !state.userId) return;
+      if (!supabaseClient || !state || !state.userId) return;
       try {
-        await supabase.from('players').upsert({
+        await supabaseClient.from('players').upsert({
           telegram_id: String(state.userId),
           score: Math.floor(state.cheddar),
           wallet_address: state.wallet || null
