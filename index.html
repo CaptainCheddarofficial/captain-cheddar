@@ -7,6 +7,7 @@
   <meta name="description" content="Captain Cheddar ($CHEDDAR) - Organic pirate-themed memecoin on Solana. Tap-to-earn, high seas arcade runner, and airdrop snapshot portal for Telegram Mini App.">
   <meta name="theme-color" content="#071322">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -361,7 +362,23 @@
     const PUMP_URL = "https://pump.fun/coin/" + CA;
     const BOT_USER = "CaptainCheddarGamebot";
     const REFERRAL_SHARE_TEXT = "Ahoy mate! Join Captain Cheddar's crew, tap cheese, and prepare for the Solana bounty! 🧀⚓️";
+// ================= SUPABASE CLIENT =================
+    const SUPABASE_URL = "https://fskxqskoivdjopsjdtmb.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZza3hxc2tvaXZkam9wc2pkdG1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI3NDg4NTMsImV4cCI6MjEwODMyNDg1M30.82MUf2T20kgjvIaDdutnIHMvEFLVWELI_Lspt10Kzvc";
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
+    async function syncToSupabase() {
+      if (!supabase || !state.userId) return;
+      try {
+        await supabase.from('players').upsert({
+          telegram_id: String(state.userId),
+          score: Math.floor(state.cheddar),
+          wallet_address: state.wallet || null
+        }, { onConflict: 'telegram_id' });
+      } catch (e) {
+        console.error("Erreur sync :", e);
+      }
+    }
     const UPGRADES_DEF = [
       { id: 'sailor_mice', name: 'Sailor Mice', icon: '🐭', desc: 'Nimble cheese-loving deckhands.', baseCost: 150, mult: 1.15, type: 'pph', val: 80 },
       { id: 'better_sails', name: 'Better Sails', icon: '⛵', desc: 'Wind-catching sails woven from aged cloth.', baseCost: 650, mult: 1.18, type: 'pph', val: 350 },
@@ -457,7 +474,7 @@
       localStorage.setItem('cheddar_save_standalone', JSON.stringify(state));
     }
     setInterval(saveState, 5000);
-
+    setInterval(syncToSupabase, 15000);
     function recalculateStats() {
       let p = 0, t = 1, me = 1000;
       UPGRADES_DEF.forEach(u => {
@@ -699,6 +716,12 @@
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
       }
+      playTone(650, 'sine', 0.1, 0.2);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+      syncToSupabase();
+    };
     };
 
     // ================= 7-DAY STREAKS =================
