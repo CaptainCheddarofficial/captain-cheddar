@@ -475,6 +475,7 @@
     }
     setInterval(saveState, 5000);
     setInterval(syncToSupabase, 15000);
+    
     function recalculateStats() {
       let p = 0, t = 1, me = 1000;
       UPGRADES_DEF.forEach(u => {
